@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+#
+# Report Descriptive Statistics
+#
+#
+import os
+import numpy as np
+import pandas as pd
+from scipy import stats
+
+### Functions
+def descriptives_table(df):
+    descriptives_df=pd.DataFrame(columns = ['features', 'count', 'mean', 'sd', 'median', 
+        'min', 'max', '25%', '50%', '75%', 'kurtosis', 'skew', 'norm_val', 'norm_p'])
+    features=df.columns
+    features=features.drop(['bbox','centroid','gt_label']) # Drop unwanted columns
+    for f in features:
+        feature_row=pd.DataFrame()
+        norm_stat, norm_p = stats.normaltest(df[f], axis=0, nan_policy='omit')
+        feature_row = [f, df[f].count(), df[f].mean(),df[f].std(),df[f].median(),
+            df[f].min(),df[f].max(),df[f].quantile(q=0.25), df[f].quantile(q=0.50),
+            df[f].quantile(q=0.75), df[f].kurtosis(), df[f].skew(), norm_stat, norm_p]
+        df_length = len(descriptives_df)
+        descriptives_df.loc[df_length] = feature_row
+    return descriptives_df
+
+#%% Pipeline
+if __name__ == '__main__':
+    infile = 'C:/Users/user/Desktop/raw_data_file.csv'
+    pwd = os.getcwd()
+    os.chdir(os.path.dirname(infile))
+    df = pd.read_csv(os.path.basename(infile), index_col=0)
+    os.chdir(pwd)
+
+    # Descriptive stats csv
+    descriptive_stats=descriptives_table(df)
+    descriptive_outfile = ('C:/Users/user/Desktop/descriptive_stats.csv')
+    descriptive_stats.to_csv(descriptive_outfile, index=False)
+       
